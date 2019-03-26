@@ -50,16 +50,32 @@ var DateTimePickerTime = createClass({
 	renderCounter: function( type ) {
 		if ( type !== 'daypart' ) {
 			var value = this.state[ type ];
+			var options;
+
+			if (type === 'hours') {
+				options = this.range(0, 23, type);
+			}
+			if (type === 'minutes') {
+				options = this.range(0, 59, type);
+			}
+
 			if ( type === 'hours' && this.props.timeFormat.toLowerCase().indexOf( ' a' ) !== -1 ) {
 				value = ( value - 1 ) % 12 + 1;
 
 				if ( value === 0 ) {
 					value = 12;
 				}
+				options = this.range(0, 11, type);
 			}
+
+			var props = { key: type, name: type, value: this.pad(type, this.state[type]), onChange: this.onChange };
+			var selector = React.createElement('select', props, options.map(function(val) {
+				return React.createElement('option', { value: val, key: val }, val);
+			}));
+
 			return React.createElement('div', { key: type, className: 'rdtCounter' }, [
 				React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'increase', type ), onContextMenu: this.disableContextMenu }, '▲' ),
-				React.createElement('div', { key: 'c', className: 'rdtCount' }, value ),
+				React.createElement('div', { key: 'c', className: 'rdtCount' }, selector),
 				React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'decrease', type ), onContextMenu: this.disableContextMenu }, '▼' )
 			]);
 		}
@@ -71,6 +87,7 @@ var DateTimePickerTime = createClass({
 			React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu }, '▲' ),
 			React.createElement('div', { key: this.state.daypart, className: 'rdtCount' }, this.state.daypart ),
 			React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu }, '▼' )
+
 		]);
 	},
 
@@ -159,7 +176,14 @@ var DateTimePickerTime = createClass({
 			React.createElement('th', { className: 'rdtSwitch', colSpan: 4, onClick: this.props.showView( 'days' ) }, date.format( this.props.dateFormat ) )
 		));
 	},
-
+	onChange: function(event) {
+		var update = {};
+		var type = event.target.name;
+		var value = event.target.value;
+		update[type] = value;
+		this.setState(update);
+		this.props.setTime(type, value);
+	},
 	onStartClicking: function( action, type ) {
 		var me = this;
 
@@ -194,7 +218,7 @@ var DateTimePickerTime = createClass({
 	},
 
 	padValues: {
-		hours: 1,
+		hours: 2,
 		minutes: 2,
 		seconds: 2,
 		milliseconds: 3
@@ -227,6 +251,13 @@ var DateTimePickerTime = createClass({
 			str = '0' + str;
 		return str;
 	},
+	range: function(start, end, type) {
+		var result = [];
+		for (var val = start; val <= end; val++) {
+			result.push(this.pad(type, val));
+		}
+		return result;
+	}
 });
 
 module.exports = DateTimePickerTime;
